@@ -1,15 +1,495 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <title>Welcome</title>
+  <head>
+    <title>🚀 Seguente File Storage Demo</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="" />
-</head>
+    <meta
+      name="description"
+      content="Simple file storage demo using seguente"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-<body>
-    <h1>Welcome!</h1>
-</body>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
 
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        margin: 0 0 10px 0;
+        font-size: 2.5em;
+        font-weight: 700;
+      }
+
+      .header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1.1em;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+      }
+
+      .section h2 {
+        margin-bottom: 15px;
+        color: #333;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #555;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 16px;
+        outline: none;
+        transition: border-color 0.3s;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: #667eea;
+      }
+
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+      }
+
+      .file-list {
+        margin-top: 15px;
+      }
+
+      .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+
+      .file-name {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .file-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-small {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+
+      .btn-download {
+        background: #28a745;
+      }
+
+      .btn-download:hover {
+        background: #218838;
+      }
+
+      .status {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-style: italic;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📝 Seguente Pastebin</h1>
+        <p>Create, share, and manage text snippets using seguente Storage</p>
+      </div>
+
+      <div class="content">
+        <!-- Create Paste Section -->
+        <div class="section">
+          <h2>📝 Create New Paste</h2>
+          <div class="form-group">
+            <label for="pasteTitle">Title:</label>
+            <input
+              type="text"
+              id="pasteTitle"
+              placeholder="Enter paste title (e.g., My Code Snippet)"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="pasteContent">Content:</label>
+            <textarea
+              id="pasteContent"
+              rows="12"
+              placeholder="Enter your text, code, or any content here..."
+              required
+            ></textarea>
+          </div>
+          <button onclick="createPaste()">Create Paste</button>
+          <div id="uploadStatus"></div>
+        </div>
+
+        <!-- Pastes List Section -->
+        <div class="section">
+          <h2>📋 Recent Pastes</h2>
+          <button onclick="loadPastes()" style="margin-bottom: 15px">
+            Refresh List
+          </button>
+          <div id="pasteList" class="file-list">
+            <div class="empty-state">No pastes created yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = window.location.origin;
+
+      async function createPaste() {
+        const title = document.getElementById("pasteTitle").value.trim();
+        const content = document.getElementById("pasteContent").value.trim();
+        const statusDiv = document.getElementById("uploadStatus");
+
+        if (!title || !content) {
+          showStatus(statusDiv, "Please enter both title and content", "error");
+          return;
+        }
+
+        // Generate a unique ID for the paste
+        const pasteId = Date.now().toString();
+        const filename = `${pasteId}_${title.replace(
+          /[^a-zA-Z0-9]/g,
+          "_"
+        )}.txt`;
+
+        try {
+          const response = await fetch(`${API_BASE}/api/upload`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              filename: filename,
+              data: content,
+            }),
+          });
+
+          if (response.ok) {
+            showStatus(statusDiv, "Paste created successfully!", "success");
+            document.getElementById("pasteTitle").value = "";
+            document.getElementById("pasteContent").value = "";
+            loadPastes(); // Refresh the paste list
+          } else {
+            showStatus(statusDiv, "Failed to create paste", "error");
+          }
+        } catch (error) {
+          showStatus(
+            statusDiv,
+            "Error creating paste: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = (e) => reject(e);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function getMimeType(filename) {
+        const ext = filename.toLowerCase().split(".").pop();
+        const mimeTypes = {
+          png: "image/png",
+          jpg: "image/jpeg",
+          jpeg: "image/jpeg",
+          gif: "image/gif",
+          bmp: "image/bmp",
+          webp: "image/webp",
+          svg: "image/svg+xml",
+          pdf: "application/pdf",
+          zip: "application/zip",
+          mp3: "audio/mpeg",
+          mp4: "video/mp4",
+          avi: "video/x-msvideo",
+          avi: "video/x-msvideo",
+          mov: "video/quicktime",
+          wmv: "video/x-ms-wmv",
+          flv: "video/x-flv",
+          webm: "video/webm",
+          ogg: "audio/ogg",
+          wav: "audio/wav",
+          flac: "audio/flac",
+          aac: "audio/aac",
+          m4a: "audio/mp4",
+        };
+        return mimeTypes[ext] || "application/octet-stream";
+      }
+
+      // Drag and Drop Functions
+      function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      function handleDragEnter(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropZone = document.getElementById("dropZone");
+        dropZone.style.borderColor = "#007bff";
+        dropZone.style.background = "#e3f2fd";
+      }
+
+      function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropZone = document.getElementById("dropZone");
+        dropZone.style.borderColor = "#e1e5e9";
+        dropZone.style.background = "#f8f9fa";
+      }
+
+      function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const dropZone = document.getElementById("dropZone");
+        dropZone.style.borderColor = "#e1e5e9";
+        dropZone.style.background = "#f8f9fa";
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          const fileInput = document.getElementById("fileInput");
+          fileInput.files = files;
+          handleFileSelect({ target: fileInput });
+        }
+      }
+
+      function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file) {
+          // Update the drop zone to show selected file
+          const dropZone = document.getElementById("dropZone");
+          const fileInfo = document.createElement("div");
+          fileInfo.style.textAlign = "center";
+          fileInfo.style.color = "#28a745";
+          fileInfo.innerHTML = `
+             <div style="font-size: 20px; margin-bottom: 4px;">✅</div>
+             <div><strong>${file.name}</strong></div>
+             <div style="font-size: 12px; color: #6c757d;">${(
+               file.size / 1024
+             ).toFixed(1)} KB</div>
+           `;
+          dropZone.innerHTML = "";
+          dropZone.appendChild(fileInfo);
+        }
+      }
+
+      function resetDropZone() {
+        const dropZone = document.getElementById("dropZone");
+        dropZone.innerHTML = `
+           <div style="text-align: center; color: #6c757d;">
+             <div style="font-size: 24px; margin-bottom: 8px;">📁</div>
+             <div>Click to select files or drag & drop here</div>
+             <div style="font-size: 12px; margin-top: 4px;">Supports any file type</div>
+           </div>
+         `;
+      }
+
+      async function loadPastes() {
+        const pasteListDiv = document.getElementById("pasteList");
+
+        try {
+          const response = await fetch(`${API_BASE}/api/list`);
+          if (response.ok) {
+            const files = await response.json();
+            console.log("Pastes received from API:", files);
+            displayPastes(files);
+          } else {
+            pasteListDiv.innerHTML =
+              '<div class="empty-state">Error loading pastes</div>';
+          }
+        } catch (error) {
+          pasteListDiv.innerHTML =
+            '<div class="empty-state">Error loading pastes: ' +
+            error.message +
+            "</div>";
+        }
+      }
+
+      function displayPastes(files) {
+        const pasteListDiv = document.getElementById("pasteList");
+
+        if (!files || files.length === 0) {
+          pasteListDiv.innerHTML =
+            '<div class="empty-state">No pastes created yet</div>';
+          return;
+        }
+
+        pasteListDiv.innerHTML = files
+          .map((filename) => {
+            // Extract title from filename (remove timestamp and .txt)
+            const title = filename.replace(/^\d+_/, "").replace(/\.txt$/, "");
+            return `
+                <div class="file-item">
+                    <span class="file-name">${title}</span>
+                    <div class="file-actions">
+                        <button class="btn-small btn-download" onclick="viewPaste('${filename}')">View</button>
+                    </div>
+                </div>
+              `;
+          })
+          .join("");
+      }
+
+      async function viewPaste(filename) {
+        try {
+          // Ensure filename is a string
+          const cleanFilename = String(filename);
+          console.log("Downloading file:", cleanFilename);
+          const response = await fetch(
+            `${API_BASE}/api/download?filename=${encodeURIComponent(
+              cleanFilename
+            )}`
+          );
+          if (response.ok) {
+            // Get the content type from the response headers
+            const contentType =
+              response.headers.get("content-type") ||
+              "application/octet-stream";
+
+            console.log("Download response content-type:", contentType);
+            console.log("Downloading file:", cleanFilename);
+
+            // Determine if it's a binary file based on content type
+            const isBinaryFile =
+              contentType.startsWith("image/") ||
+              contentType.startsWith("video/") ||
+              contentType.startsWith("audio/") ||
+              contentType === "application/pdf" ||
+              contentType === "application/zip" ||
+              contentType === "application/octet-stream";
+
+            console.log("Is binary file:", isBinaryFile);
+
+            let blob;
+            if (isBinaryFile) {
+              // For binary files, get as array buffer
+              const arrayBuffer = await response.arrayBuffer();
+              blob = new Blob([arrayBuffer], { type: contentType });
+            } else {
+              // For text files, get as text
+              const content = await response.text();
+              blob = new Blob([content], { type: contentType });
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = cleanFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          } else {
+            alert("Failed to download file");
+          }
+        } catch (error) {
+          alert("Error downloading file: " + error.message);
+        }
+      }
+
+      function showStatus(element, message, type) {
+        element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        setTimeout(() => {
+          element.innerHTML = "";
+        }, 3000);
+      }
+
+      // Load files on page load
+      window.onload = function () {
+        loadFiles();
+      };
+    </script>
+  </body>
 </html>
