@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>🚀 Seguente File Storage Demo</title>
+    <title>📝 Seguente Pastebin</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta
       name="description"
-      content="Simple file storage demo using seguente"
+      content="Simple pastebin for sharing text snippets using seguente"
     />
     <style>
       * {
@@ -138,12 +138,73 @@
         font-size: 14px;
       }
 
-      .btn-download {
-        background: #28a745;
+      .btn-view {
+        background: #007bff;
       }
 
-      .btn-download:hover {
-        background: #218838;
+      .btn-view:hover {
+        background: #0056b3;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e1e5e9;
+      }
+
+      .modal-title {
+        font-size: 1.5em;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover {
+        color: #000;
+      }
+
+      .modal-body {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 60vh;
+        overflow-y: auto;
       }
 
       .status {
@@ -220,6 +281,17 @@
       </div>
     </div>
 
+    <!-- Modal for viewing paste content -->
+    <div id="pasteModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title" id="modalTitle">Paste Content</div>
+          <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+
     <script>
       const API_BASE = window.location.origin;
 
@@ -269,113 +341,6 @@
         }
       }
 
-      function readFileAsBase64(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.onerror = (e) => reject(e);
-          reader.readAsDataURL(file);
-        });
-      }
-
-      function getMimeType(filename) {
-        const ext = filename.toLowerCase().split(".").pop();
-        const mimeTypes = {
-          png: "image/png",
-          jpg: "image/jpeg",
-          jpeg: "image/jpeg",
-          gif: "image/gif",
-          bmp: "image/bmp",
-          webp: "image/webp",
-          svg: "image/svg+xml",
-          pdf: "application/pdf",
-          zip: "application/zip",
-          mp3: "audio/mpeg",
-          mp4: "video/mp4",
-          avi: "video/x-msvideo",
-          avi: "video/x-msvideo",
-          mov: "video/quicktime",
-          wmv: "video/x-ms-wmv",
-          flv: "video/x-flv",
-          webm: "video/webm",
-          ogg: "audio/ogg",
-          wav: "audio/wav",
-          flac: "audio/flac",
-          aac: "audio/aac",
-          m4a: "audio/mp4",
-        };
-        return mimeTypes[ext] || "application/octet-stream";
-      }
-
-      // Drag and Drop Functions
-      function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-      function handleDragEnter(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const dropZone = document.getElementById("dropZone");
-        dropZone.style.borderColor = "#007bff";
-        dropZone.style.background = "#e3f2fd";
-      }
-
-      function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const dropZone = document.getElementById("dropZone");
-        dropZone.style.borderColor = "#e1e5e9";
-        dropZone.style.background = "#f8f9fa";
-      }
-
-      function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const dropZone = document.getElementById("dropZone");
-        dropZone.style.borderColor = "#e1e5e9";
-        dropZone.style.background = "#f8f9fa";
-
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-          const fileInput = document.getElementById("fileInput");
-          fileInput.files = files;
-          handleFileSelect({ target: fileInput });
-        }
-      }
-
-      function handleFileSelect(e) {
-        const file = e.target.files[0];
-        if (file) {
-          // Update the drop zone to show selected file
-          const dropZone = document.getElementById("dropZone");
-          const fileInfo = document.createElement("div");
-          fileInfo.style.textAlign = "center";
-          fileInfo.style.color = "#28a745";
-          fileInfo.innerHTML = `
-             <div style="font-size: 20px; margin-bottom: 4px;">✅</div>
-             <div><strong>${file.name}</strong></div>
-             <div style="font-size: 12px; color: #6c757d;">${(
-               file.size / 1024
-             ).toFixed(1)} KB</div>
-           `;
-          dropZone.innerHTML = "";
-          dropZone.appendChild(fileInfo);
-        }
-      }
-
-      function resetDropZone() {
-        const dropZone = document.getElementById("dropZone");
-        dropZone.innerHTML = `
-           <div style="text-align: center; color: #6c757d;">
-             <div style="font-size: 24px; margin-bottom: 8px;">📁</div>
-             <div>Click to select files or drag & drop here</div>
-             <div style="font-size: 12px; margin-top: 4px;">Supports any file type</div>
-           </div>
-         `;
-      }
-
       async function loadPastes() {
         const pasteListDiv = document.getElementById("pasteList");
 
@@ -414,7 +379,7 @@
                 <div class="file-item">
                     <span class="file-name">${title}</span>
                     <div class="file-actions">
-                        <button class="btn-small btn-download" onclick="viewPaste('${filename}')">View</button>
+                        <button class="btn-small btn-view" onclick="viewPaste('${filename}')">View</button>
                     </div>
                 </div>
               `;
@@ -424,60 +389,46 @@
 
       async function viewPaste(filename) {
         try {
-          // Ensure filename is a string
           const cleanFilename = String(filename);
-          console.log("Downloading file:", cleanFilename);
+          console.log("Loading paste:", cleanFilename);
+
           const response = await fetch(
             `${API_BASE}/api/download?filename=${encodeURIComponent(
               cleanFilename
             )}`
           );
+
           if (response.ok) {
-            // Get the content type from the response headers
-            const contentType =
-              response.headers.get("content-type") ||
-              "application/octet-stream";
+            const content = await response.text();
 
-            console.log("Download response content-type:", contentType);
-            console.log("Downloading file:", cleanFilename);
+            // Extract title from filename
+            const title = cleanFilename
+              .replace(/^\d+_/, "")
+              .replace(/\.txt$/, "");
 
-            // Determine if it's a binary file based on content type
-            const isBinaryFile =
-              contentType.startsWith("image/") ||
-              contentType.startsWith("video/") ||
-              contentType.startsWith("audio/") ||
-              contentType === "application/pdf" ||
-              contentType === "application/zip" ||
-              contentType === "application/octet-stream";
-
-            console.log("Is binary file:", isBinaryFile);
-
-            let blob;
-            if (isBinaryFile) {
-              // For binary files, get as array buffer
-              const arrayBuffer = await response.arrayBuffer();
-              blob = new Blob([arrayBuffer], { type: contentType });
-            } else {
-              // For text files, get as text
-              const content = await response.text();
-              blob = new Blob([content], { type: contentType });
-            }
-
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = cleanFilename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            // Show modal with content
+            document.getElementById("modalTitle").textContent = title;
+            document.getElementById("modalBody").textContent = content;
+            document.getElementById("pasteModal").style.display = "block";
           } else {
-            alert("Failed to download file");
+            alert("Failed to load paste");
           }
         } catch (error) {
-          alert("Error downloading file: " + error.message);
+          alert("Error loading paste: " + error.message);
         }
       }
+
+      function closeModal() {
+        document.getElementById("pasteModal").style.display = "none";
+      }
+
+      // Close modal when clicking outside of it
+      window.onclick = function (event) {
+        const modal = document.getElementById("pasteModal");
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      };
 
       function showStatus(element, message, type) {
         element.innerHTML = `<div class="status ${type}">${message}</div>`;
@@ -486,9 +437,9 @@
         }, 3000);
       }
 
-      // Load files on page load
+      // Load pastes on page load
       window.onload = function () {
-        loadFiles();
+        loadPastes();
       };
     </script>
   </body>
